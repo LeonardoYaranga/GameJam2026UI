@@ -30,23 +30,36 @@ namespace GameJamUI.Editor
 
             // 1. Top-Left: Profile Pic and Bars (Keep as is, user didn't ask to remove it)
             GameObject topLeftPanel = CreateUIElement("TopLeft_ProfilePanel", canvas.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20));
+            // Profile Pic
             GameObject profilePic = CreateUIElement("ProfilePic", topLeftPanel.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(120, 120));
             Image profileImg = profilePic.AddComponent<Image>();
-            profileImg.color = Color.gray;
+            Sprite boobySprite = LoadOrFixSprite("Assets/Sprites/UI/profile_booby.jpg");
+            if (boobySprite != null) profileImg.sprite = boobySprite;
+            else profileImg.color = Color.gray;
 
             GameObject barsContainer = CreateUIElement("BarsContainer", topLeftPanel.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(130, -10), new Vector2(300, 120));
             VerticalLayoutGroup barsLayout = barsContainer.AddComponent<VerticalLayoutGroup>();
             barsLayout.childForceExpandHeight = false;
             barsLayout.spacing = 10;
 
+            // Health Bar
             GameObject healthBarObj = CreateUIElement("HealthBar", barsContainer.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300, 30));
-            healthBarObj.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f);
+            Image healthBg = healthBarObj.AddComponent<Image>();
+            Sprite healthFrameSprite = LoadOrFixSprite("Assets/Sprites/UI/frame_health.jpg");
+            if (healthFrameSprite != null) healthBg.sprite = healthFrameSprite;
+            else healthBg.color = new Color(0.2f, 0.2f, 0.2f);
+            
             GameObject healthFillObj = CreateUIElement("Fill", healthBarObj.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), Vector2.zero);
             healthFillObj.AddComponent<Image>().color = Color.red;
             UI_StatusBar healthStatusBar = healthBarObj.AddComponent<UI_StatusBar>();
 
+            // Energy Bar
             GameObject energyBarObj = CreateUIElement("EnergyBar", barsContainer.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300, 20));
-            energyBarObj.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f);
+            Image energyBg = energyBarObj.AddComponent<Image>();
+            Sprite energyFrameSprite = LoadOrFixSprite("Assets/Sprites/UI/frame_stamina.jpg");
+            if (energyFrameSprite != null) energyBg.sprite = energyFrameSprite;
+            else energyBg.color = new Color(0.2f, 0.2f, 0.2f);
+            
             GameObject energyFillObj = CreateUIElement("Fill", energyBarObj.transform, Vector2.zero, Vector2.one, new Vector2(0, 0.5f), Vector2.zero);
             energyFillObj.AddComponent<Image>().color = Color.yellow;
             UI_StatusBar energyStatusBar = energyBarObj.AddComponent<UI_StatusBar>();
