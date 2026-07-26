@@ -15,7 +15,9 @@ namespace CardSystem
         Attack,
         Defense,
         Health,
-        Speed
+        Speed,
+        Agility,
+        Stamina
     }
 
     [System.Serializable]
@@ -45,6 +47,8 @@ namespace CardSystem
                 case StatType.Defense: return "Defensa";
                 case StatType.Health: return "Salud";
                 case StatType.Speed: return "Velocidad";
+                case StatType.Agility: return "Agilidad";
+                case StatType.Stamina: return "Estamina";
                 default: return type.ToString();
             }
         }

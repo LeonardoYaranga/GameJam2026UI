@@ -11,17 +11,17 @@ namespace GameJamUI.Editor
         [MenuItem("GameJamUI/Build HUD Layout (Redesign)")]
         public static void BuildHUD()
         {
-            Canvas canvas = FindAnyObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                GameObject canvasObj = new GameObject("Canvas");
-                canvas = canvasObj.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-                canvasObj.AddComponent<GraphicRaycaster>();
-            }
+            // 0. Clean ALL old HUD objects and canvases in the scene
+            CleanAllOldHUDObjects();
+
+            GameObject canvasObj = new GameObject("HUD_Canvas");
+            Canvas canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 0; // Layer base para el HUD
+            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            canvasObj.AddComponent<GraphicRaycaster>();
 
             GameObject hudManagerObj = new GameObject("HUDManager");
             hudManagerObj.transform.SetParent(canvas.transform, false);
@@ -138,7 +138,10 @@ namespace GameJamUI.Editor
                 eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            Debug.Log("[HUDCanvasBuilder] HUD Layout (Redesign v2) created successfully!");
+            // Save Prefab
+            PrefabUtility.SaveAsPrefabAsset(canvasObj, "Assets/Prefabs/HUDCanvas.prefab");
+
+            Debug.Log("[HUDCanvasBuilder] HUD Layout created and saved as prefab successfully!");
         }
 
         private static GameObject CreateUIElement(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition)
@@ -204,6 +207,35 @@ namespace GameJamUI.Editor
                 importer.SaveAndReimport();
             }
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static void CleanAllOldHUDObjects()
+        {
+            string[] namesToDestroy = new string[] {
+                "HUD_Canvas",
+                "Canvas",
+                "HUDManager",
+                "HUD_Controller",
+                "TopLeft_ProfilePanel",
+                "TopCenter_TimerPanel",
+                "TopRight_TimerPanel",
+                "TopRight_PausePanel",
+                "BottomLeft_ElementsPanel",
+                "BottomRight_StatsPanel"
+            };
+
+            foreach (var name in namesToDestroy)
+            {
+                GameObject[] foundObjs = System.Array.FindAll(
+                    Resources.FindObjectsOfTypeAll<GameObject>(),
+                    go => go != null && go.name == name && go.hideFlags == HideFlags.None && !EditorUtility.IsPersistent(go)
+                );
+
+                foreach (var obj in foundObjs)
+                {
+                    Object.DestroyImmediate(obj);
+                }
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ namespace CardSystem
         [Header("UI Componentes")]
         [SerializeField] private Image elementHeaderIcon;
         [SerializeField] private Image cardGlowFrame;
+        [SerializeField] private Image cardBackgroundImage;
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI elementLabelText;
         [SerializeField] private Transform statsContainer;
@@ -24,11 +25,18 @@ namespace CardSystem
         [SerializeField] private Sprite waterSprite;
         [SerializeField] private Sprite natureSprite;
 
+        [Header("Sprites de Fondos de Tarjetas")]
+        [SerializeField] private Sprite fireCardBgSprite;
+        [SerializeField] private Sprite waterCardBgSprite;
+        [SerializeField] private Sprite natureCardBgSprite;
+
         [Header("Sprites de Stats")]
         [SerializeField] private Sprite attackIcon;
         [SerializeField] private Sprite defenseIcon;
         [SerializeField] private Sprite healthIcon;
         [SerializeField] private Sprite speedIcon;
+        [SerializeField] private Sprite agilityIcon;
+        [SerializeField] private Sprite staminaIcon;
 
         [Header("Colores por Elemento")]
         [SerializeField] private Color fireGlowColor = new Color(1f, 0.45f, 0.1f, 1f);
@@ -38,7 +46,12 @@ namespace CardSystem
         private Action<CardData> onCardSelectedCallback;
         private CardData currentCardData;
 
-        public void SetupCard(CardData data, Action<CardData> onSelect, Sprite fireSp, Sprite waterSp, Sprite natureSp, Sprite attSp, Sprite defSp, Sprite hpSp, Sprite spdSp)
+        public void SetupCard(
+            CardData data, 
+            Action<CardData> onSelect, 
+            Sprite fireSp, Sprite waterSp, Sprite natureSp, 
+            Sprite fireBgSp, Sprite waterBgSp, Sprite natureBgSp,
+            Sprite attSp, Sprite defSp, Sprite hpSp, Sprite spdSp, Sprite agiSp, Sprite staSp)
         {
             currentCardData = data;
             onCardSelectedCallback = onSelect;
@@ -46,15 +59,23 @@ namespace CardSystem
             if (fireSp != null) fireSprite = fireSp;
             if (waterSp != null) waterSprite = waterSp;
             if (natureSp != null) natureSprite = natureSp;
+
+            if (fireBgSp != null) fireCardBgSprite = fireBgSp;
+            if (waterBgSp != null) waterCardBgSprite = waterBgSp;
+            if (natureBgSp != null) natureCardBgSprite = natureBgSp;
+
             if (attSp != null) attackIcon = attSp;
             if (defSp != null) defenseIcon = defSp;
             if (hpSp != null) healthIcon = hpSp;
             if (spdSp != null) speedIcon = spdSp;
+            if (agiSp != null) agilityIcon = agiSp;
+            if (staSp != null) staminaIcon = staSp;
 
             // 1. Configurar Título y Elemento
             if (titleText != null) titleText.text = data.cardName;
 
             Sprite elemSprite = null;
+            Sprite cardBgSprite = null;
             Color glowColor = fireGlowColor;
             string elemName = "";
 
@@ -62,16 +83,19 @@ namespace CardSystem
             {
                 case ElementType.Fire:
                     elemSprite = fireSprite;
+                    cardBgSprite = fireCardBgSprite;
                     glowColor = fireGlowColor;
                     elemName = "FUEGO";
                     break;
                 case ElementType.Water:
                     elemSprite = waterSprite;
+                    cardBgSprite = waterCardBgSprite;
                     glowColor = waterGlowColor;
                     elemName = "AGUA";
                     break;
                 case ElementType.Nature:
                     elemSprite = natureSprite;
+                    cardBgSprite = natureCardBgSprite;
                     glowColor = natureGlowColor;
                     elemName = "NATURALEZA";
                     break;
@@ -83,15 +107,22 @@ namespace CardSystem
                 elementHeaderIcon.color = Color.white;
             }
 
+            // Aplicar fondo de tarjeta si existe la referencia
+            Image targetBgImage = cardBackgroundImage != null ? cardBackgroundImage : cardGlowFrame;
+            if (targetBgImage != null && cardBgSprite != null)
+            {
+                targetBgImage.sprite = cardBgSprite;
+                targetBgImage.color = Color.white;
+            }
+            else if (cardGlowFrame != null)
+            {
+                cardGlowFrame.color = glowColor;
+            }
+
             if (elementLabelText != null)
             {
                 elementLabelText.text = elemName;
                 elementLabelText.color = glowColor;
-            }
-
-            if (cardGlowFrame != null)
-            {
-                cardGlowFrame.color = glowColor;
             }
 
             // 2. Limpiar filas anteriores
@@ -136,6 +167,8 @@ namespace CardSystem
                 case StatType.Defense: return defenseIcon;
                 case StatType.Health: return healthIcon;
                 case StatType.Speed: return speedIcon;
+                case StatType.Agility: return agilityIcon;
+                case StatType.Stamina: return staminaIcon;
                 default: return attackIcon;
             }
         }

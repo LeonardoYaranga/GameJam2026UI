@@ -23,11 +23,18 @@ namespace CardSystem
         public Sprite waterSprite;
         public Sprite natureSprite;
 
+        [Header("Sprites de Fondos de Tarjetas")]
+        public Sprite fireCardBgSprite;
+        public Sprite waterCardBgSprite;
+        public Sprite natureCardBgSprite;
+
         [Header("Sprites de Stats")]
         public Sprite attackSprite;
         public Sprite defenseSprite;
         public Sprite healthSprite;
         public Sprite speedSprite;
+        public Sprite agilitySprite;
+        public Sprite staminaSprite;
 
         private void Start()
         {
@@ -139,7 +146,8 @@ namespace CardSystem
                         data, 
                         OnCardSelected, 
                         fireSprite, waterSprite, natureSprite, 
-                        attackSprite, defenseSprite, healthSprite, speedSprite
+                        fireCardBgSprite, waterCardBgSprite, natureCardBgSprite,
+                        attackSprite, defenseSprite, healthSprite, speedSprite, agilitySprite, staminaSprite
                     );
                 }
             }
@@ -153,6 +161,8 @@ namespace CardSystem
 
             if (playerStats != null)
             {
+                playerStats.AddElementCard(selectedData.element);
+
                 foreach (var modifier in selectedData.statModifiers)
                 {
                     playerStats.ApplyModifier(modifier.statType, modifier.amount);

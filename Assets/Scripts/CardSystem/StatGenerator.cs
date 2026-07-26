@@ -58,7 +58,9 @@ namespace CardSystem
                 StatType.Attack, 
                 StatType.Defense, 
                 StatType.Health, 
-                StatType.Speed 
+                StatType.Speed,
+                StatType.Agility,
+                StatType.Stamina
             };
             Shuffle(availableStats);
 
@@ -94,6 +96,8 @@ namespace CardSystem
                 case StatType.Defense: return Random.Range(2, 5);  // +2 a +4 Defensa
                 case StatType.Health: return Random.Range(15, 36); // +15 a +35 Salud
                 case StatType.Speed: return Random.Range(1, 3);    // +1 a +2 Velocidad
+                case StatType.Agility: return Random.Range(2, 5);  // +2 a +4 Agilidad
+                case StatType.Stamina: return Random.Range(10, 26); // +10 a +25 Estamina
                 default: return 2;
             }
         }
@@ -106,6 +110,8 @@ namespace CardSystem
                 case StatType.Defense: return Random.Range(1, 4);  // -1 a -3 Defensa
                 case StatType.Health: return Random.Range(8, 21);  // -8 a -20 Salud
                 case StatType.Speed: return 1;                     // -1 Velocidad
+                case StatType.Agility: return Random.Range(1, 3);  // -1 a -2 Agilidad
+                case StatType.Stamina: return Random.Range(5, 15); // -5 a -14 Estamina
                 default: return 1;
             }
         }

@@ -165,19 +165,10 @@ namespace CardSystem.Editor
 
         private static void CreateSceneHierarchy(CardDisplayUI cardPrefab)
         {
-            // Canvas
-            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                GameObject canvasObj = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                canvas = canvasObj.GetComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                CanvasScaler scaler = canvasObj.GetComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-            }
+            // 1. Limpieza de duplicados previos (incluyendo objetos desactivados)
+            CleanOldCardSystemObjects();
 
-            // EventSystem (InputSystem Package)
+            // 2. EventSystem (InputSystem Package)
             UnityEngine.EventSystems.EventSystem eventSystem = Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
             if (eventSystem == null)
             {
@@ -203,7 +194,7 @@ namespace CardSystem.Editor
                 }
             }
 
-            // PlayerStats Manager
+            // 3. PlayerStats Manager
             PlayerStats ps = Object.FindFirstObjectByType<PlayerStats>();
             if (ps == null)
             {
@@ -211,105 +202,127 @@ namespace CardSystem.Editor
                 ps = psObj.GetComponent<PlayerStats>();
             }
 
-            // GameObject Controlador Principal (Siempre Activo)
-            GameObject controllerObj = GameObject.Find("CardSystemController");
-            if (controllerObj == null)
-            {
-                controllerObj = new GameObject("CardSystemController", typeof(CardSelectionOverlayManager));
-            }
-            CardSelectionOverlayManager manager = controllerObj.GetComponent<CardSelectionOverlayManager>();
+            // 4. Canvas exclusivo para el Sistema de Tarjetas (Separado del HUD)
+            GameObject cardCanvasObj = new GameObject("CardSelection_Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            Canvas cardCanvas = cardCanvasObj.GetComponent<Canvas>();
+            cardCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            cardCanvas.sortingOrder = 10; // Prioridad alta por encima del HUD
 
-            // Borrar objeto antiguo CardSelectionOverlay si era el manager
-            GameObject oldOverlay = GameObject.Find("CardSelectionOverlay");
-            if (oldOverlay != null && oldOverlay.GetComponent<CardSelectionOverlayManager>() != null)
-            {
-                Object.DestroyImmediate(oldOverlay);
-            }
+            CanvasScaler scaler = cardCanvasObj.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
 
-            // Test Button ("Generar Tarjetas")
-            GameObject btnObj = GameObject.Find("Btn_GenerarTarjetas");
-            if (btnObj == null)
-            {
-                btnObj = new GameObject("Btn_GenerarTarjetas", typeof(RectTransform), typeof(Image), typeof(Button));
-                btnObj.transform.SetParent(canvas.transform, false);
-                RectTransform btnRect = btnObj.GetComponent<RectTransform>();
-                btnRect.anchorMin = new Vector2(0.5f, 0.1f);
-                btnRect.anchorMax = new Vector2(0.5f, 0.1f);
-                btnRect.anchoredPosition = Vector2.zero;
-                btnRect.sizeDelta = new Vector2(280, 65);
+            // 5. Controller Principal
+            CardSelectionOverlayManager manager = cardCanvasObj.AddComponent<CardSelectionOverlayManager>();
 
-                Image btnImg = btnObj.GetComponent<Image>();
-                btnImg.color = new Color(0.15f, 0.55f, 0.95f, 1f);
+            // 6. Test Button ("Generar Tarjetas") dentro del CardSelection_Canvas
+            GameObject btnObj = new GameObject("Btn_GenerarTarjetas", typeof(RectTransform), typeof(Image), typeof(Button));
+            btnObj.transform.SetParent(cardCanvasObj.transform, false);
+            RectTransform btnRect = btnObj.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(0.5f, 0.08f);
+            btnRect.anchorMax = new Vector2(0.5f, 0.08f);
+            btnRect.anchoredPosition = Vector2.zero;
+            btnRect.sizeDelta = new Vector2(280, 65);
 
-                GameObject btnTextObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-                btnTextObj.transform.SetParent(btnObj.transform, false);
-                TextMeshProUGUI btnTmp = btnTextObj.GetComponent<TextMeshProUGUI>();
-                btnTmp.fontSize = 20;
-                btnTmp.fontStyle = FontStyles.Bold;
-                btnTmp.alignment = TextAlignmentOptions.Center;
-                btnTmp.text = "Generar Tarjetas [G]";
-                btnTmp.color = Color.white;
-            }
+            Image btnImg = btnObj.GetComponent<Image>();
+            btnImg.color = new Color(0.15f, 0.55f, 0.95f, 1f);
 
-            // Overlay Panel (Fondo oscuro)
-            GameObject overlayPanelObj = GameObject.Find("CardSelectionOverlayPanel");
-            if (overlayPanelObj == null)
-            {
-                overlayPanelObj = new GameObject("CardSelectionOverlayPanel", typeof(RectTransform), typeof(Image));
-                overlayPanelObj.transform.SetParent(canvas.transform, false);
-                RectTransform overlayRect = overlayPanelObj.GetComponent<RectTransform>();
-                overlayRect.anchorMin = Vector2.zero;
-                overlayRect.anchorMax = Vector2.one;
-                overlayRect.sizeDelta = Vector2.zero;
+            GameObject btnTextObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            btnTextObj.transform.SetParent(btnObj.transform, false);
+            TextMeshProUGUI btnTmp = btnTextObj.GetComponent<TextMeshProUGUI>();
+            btnTmp.fontSize = 20;
+            btnTmp.fontStyle = FontStyles.Bold;
+            btnTmp.alignment = TextAlignmentOptions.Center;
+            btnTmp.text = "Generar Tarjetas [G]";
+            btnTmp.color = Color.white;
 
-                Image overlayImg = overlayPanelObj.GetComponent<Image>();
-                overlayImg.color = new Color(0f, 0f, 0f, 0.88f);
-            }
+            // 7. Overlay Panel (Fondo oscuro)
+            GameObject overlayPanelObj = new GameObject("CardSelectionOverlayPanel", typeof(RectTransform), typeof(Image));
+            overlayPanelObj.transform.SetParent(cardCanvasObj.transform, false);
+            RectTransform overlayRect = overlayPanelObj.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.sizeDelta = Vector2.zero;
 
-            // Container para las 3 tarjetas
-            Transform cardsContainer = overlayPanelObj.transform.Find("CardsContainer");
-            if (cardsContainer == null)
-            {
-                GameObject containerObj = new GameObject("CardsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-                containerObj.transform.SetParent(overlayPanelObj.transform, false);
-                cardsContainer = containerObj.transform;
-                RectTransform containerRect = containerObj.GetComponent<RectTransform>();
-                containerRect.anchorMin = new Vector2(0.5f, 0.5f);
-                containerRect.anchorMax = new Vector2(0.5f, 0.5f);
-                containerRect.sizeDelta = new Vector2(950, 450);
-                containerRect.anchoredPosition = Vector2.zero;
+            Image overlayImg = overlayPanelObj.GetComponent<Image>();
+            overlayImg.color = new Color(0f, 0f, 0f, 0.88f);
 
-                HorizontalLayoutGroup hlg = containerObj.GetComponent<HorizontalLayoutGroup>();
-                hlg.spacing = 30;
-                hlg.childAlignment = TextAnchor.MiddleCenter;
-                hlg.childControlWidth = false;
-                hlg.childControlHeight = false;
-            }
+            // 8. Container para las 3 tarjetas
+            GameObject containerObj = new GameObject("CardsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            containerObj.transform.SetParent(overlayPanelObj.transform, false);
+            RectTransform containerRect = containerObj.GetComponent<RectTransform>();
+            containerRect.anchorMin = new Vector2(0.5f, 0.5f);
+            containerRect.anchorMax = new Vector2(0.5f, 0.5f);
+            containerRect.sizeDelta = new Vector2(950, 450);
+            containerRect.anchoredPosition = Vector2.zero;
 
-            // Asignar referencias al manager
+            HorizontalLayoutGroup hlg = containerObj.GetComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 30;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = false;
+
+            // 9. Asignar referencias al manager
             SerializedObject so = new SerializedObject(manager);
             so.FindProperty("overlayPanel").objectReferenceValue = overlayPanelObj;
-            so.FindProperty("cardsContainer").objectReferenceValue = cardsContainer;
+            so.FindProperty("cardsContainer").objectReferenceValue = containerObj.transform;
             so.FindProperty("generateCardsButton").objectReferenceValue = btnObj.GetComponent<Button>();
             so.FindProperty("cardPrefab").objectReferenceValue = cardPrefab;
             so.FindProperty("playerStats").objectReferenceValue = ps;
 
-            // Cargar Sprites
+            // Cargar Sprites de Elementos
             so.FindProperty("fireSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/element_fire.jpg");
             so.FindProperty("waterSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/element_water.jpg");
             so.FindProperty("natureSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/element_nature.jpg");
+
+            // Cargar Sprites de Fondos de Tarjetas
+            so.FindProperty("fireCardBgSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/card_bg_fire.jpg");
+            so.FindProperty("waterCardBgSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/card_bg_water.jpg");
+            so.FindProperty("natureCardBgSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/card_bg_nature.jpg");
+
+            // Cargar Sprites de Stats
             so.FindProperty("attackSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_attack.jpg");
             so.FindProperty("defenseSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_defense.jpg");
             so.FindProperty("healthSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_health.jpg");
-            so.FindProperty("speedSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_health.jpg");
+            so.FindProperty("speedSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_speed.jpg");
+            so.FindProperty("agilitySprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_agility.jpg");
+            so.FindProperty("staminaSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/stat_stamina.jpg");
             so.ApplyModifiedProperties();
 
-            // Asegurar que el botón tenga el listener directamente conectado
+            // Conectar Listener al Botón
             Button btn = btnObj.GetComponent<Button>();
             btn.onClick.RemoveAllListeners();
             UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, manager.OnGenerateCardsButtonPressed);
 
+            // 10. Guardar como Prefab modular en Assets/Prefabs/CardSelectionCanvas.prefab
+            string cardCanvasPrefabPath = "Assets/Prefabs/CardSelectionCanvas.prefab";
+            PrefabUtility.SaveAsPrefabAsset(cardCanvasObj, cardCanvasPrefabPath);
+
             overlayPanelObj.SetActive(false);
+        }
+
+        private static void CleanOldCardSystemObjects()
+        {
+            string[] namesToDestroy = new string[] {
+                "CardSelection_Canvas",
+                "CardSelectionOverlayPanel",
+                "CardSelectionOverlay",
+                "CardSystemController",
+                "Btn_GenerarTarjetas"
+            };
+
+            foreach (var name in namesToDestroy)
+            {
+                GameObject[] foundObjs = System.Array.FindAll(
+                    Resources.FindObjectsOfTypeAll<GameObject>(),
+                    go => go != null && go.name == name && go.hideFlags == HideFlags.None && !EditorUtility.IsPersistent(go)
+                );
+
+                foreach (var obj in foundObjs)
+                {
+                    Object.DestroyImmediate(obj);
+                }
+            }
         }
     }
 }

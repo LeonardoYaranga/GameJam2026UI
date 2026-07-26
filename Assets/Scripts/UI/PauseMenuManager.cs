@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -13,33 +14,60 @@ namespace GameJam2026UI.UI
         [Tooltip("Asigna aquí el GameObject raíz del Menú de Pausa (ej. el Panel principal oscuro)")]
         [SerializeField] private GameObject pauseMenuPanel;
 
+        [Header("Scene Navigation")]
+        [SerializeField] private string mainMenuSceneName = "MainMenu";
+
         private bool isPaused = false;
+
+        public bool IsPaused => isPaused;
 
         private void Start()
         {
-            // Asegurarnos de que el menú está cerrado al iniciar
+            // Asegurarnos de que el tiempo esté normal y el menú cerrado al iniciar la escena
+            Time.timeScale = 1f;
             if (pauseMenuPanel != null)
             {
                 pauseMenuPanel.SetActive(false);
             }
-            ResumeGame();
+            isPaused = false;
+
+            // Escuchar el botón "Menu" del HUD
+            if (GameJamUI.HUD.HUDManager.Instance != null)
+            {
+                GameJamUI.HUD.HUDManager.Instance.OnPauseRequested += TogglePause;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (GameJamUI.HUD.HUDManager.Instance != null)
+            {
+                GameJamUI.HUD.HUDManager.Instance.OnPauseRequested -= TogglePause;
+            }
         }
 
         private void Update()
         {
-            // Fallback al sistema de input antiguo por si acaso
-            // Si usas el nuevo Input System a través de eventos, puedes borrar este método Update
-            // y llamar directamente al método TogglePause() desde tu PlayerInput.
-            #if ENABLE_LEGACY_INPUT_MANAGER
+            // Atajo de teclado para pausar / despausar con Escape o P (Compatible con el nuevo Input System y Legacy)
+#if ENABLE_INPUT_SYSTEM
+            var kbd = Keyboard.current;
+            if (kbd != null)
+            {
+                if (kbd.escapeKey.wasPressedThisFrame || kbd.pKey.wasPressedThisFrame)
+                {
+                    TogglePause();
+                }
+            }
+#else
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
             {
                 TogglePause();
             }
-            #endif
+#endif
         }
 
         /// <summary>
-        /// Alterna entre pausar y reanudar el juego. Útil para enlazar con eventos del Input System.
+        /// Alterna entre pausar y reanudar el juego.
         /// </summary>
         public void TogglePause()
         {
@@ -56,12 +84,11 @@ namespace GameJam2026UI.UI
         public void PauseGame()
         {
             isPaused = true;
-            Time.timeScale = 0f; // Detiene el tiempo
+            Time.timeScale = 0f; // Congela el tiempo del juego
             
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(true);
                 
-            // Mostrar y desbloquear el cursor
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
@@ -69,43 +96,26 @@ namespace GameJam2026UI.UI
         public void ResumeGame()
         {
             isPaused = false;
-            Time.timeScale = 1f; // Reanuda el tiempo
+            Time.timeScale = 1f; // Reanuda el tiempo del juego
             
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
-                
-            // Ocultar y bloquear el cursor (Ajusta esto según el tipo de juego, ej. si es un FPS)
-            // Cursor.lockState = CursorLockMode.Locked;
-            // Cursor.visible = false;
-        }
-
-        public void SaveGame()
-        {
-            Debug.Log("Guardar partida accionado.");
-            // Aquí iría la lógica para guardar el progreso
         }
 
         public void OpenSettings()
         {
-            Debug.Log("Abrir Ajustes accionado.");
-            // Aquí iría la lógica para mostrar el menú de opciones (desactivar pauseMenuPanel y activar panel de ajustes)
+            Debug.Log("[PauseMenuManager] Abrir Opciones / Ajustes.");
         }
 
         public void QuitGame()
         {
-            Debug.Log("Salir del juego accionado.");
+            Debug.Log("[PauseMenuManager] Salir al Menú Principal. Cargando escena: " + mainMenuSceneName);
             
-            // Reanudar el tiempo antes de salir (buena práctica por si cambias de escena)
+            // Reanudar el tiempo antes de cambiar de escena para evitar que el MainMenu empiece pausado
             Time.timeScale = 1f;
+            isPaused = false;
 
-            // Ejemplo: Cargar la escena del Menú Principal
-            // SceneManager.LoadScene("MainMenu");
-            
-            #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-            #else
-            Application.Quit();
-            #endif
+            SceneManager.LoadScene(mainMenuSceneName);
         }
     }
 }
