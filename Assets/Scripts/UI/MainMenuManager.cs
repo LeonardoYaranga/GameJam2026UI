@@ -9,8 +9,16 @@ namespace GameJam2026UI.UI
         [Tooltip("Nombre de la escena a cargar al presionar NEW GAME")]
         [SerializeField] private string gameplaySceneName = "Hud";
 
+        [Tooltip("Nombre de la escena a cargar al presionar CREDITS (si loadCreditsAsScene es true)")]
+        [SerializeField] private string creditsSceneName = "Credits";
+
+        [Tooltip("Si es true, se cargará la escena de Créditos. Si es false, se activará el panel overlay.")]
+        [SerializeField] private bool loadCreditsAsScene = true;
+
         [Header("UI Panels (Opcional)")]
         [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private GameObject creditsPanel;
+        [SerializeField] private CreditsManager creditsManager;
 
         private void Start()
         {
@@ -20,6 +28,11 @@ namespace GameJam2026UI.UI
             if (settingsPanel != null)
             {
                 settingsPanel.SetActive(false);
+            }
+
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
             }
         }
 
@@ -40,7 +53,34 @@ namespace GameJam2026UI.UI
 
         public void Credits()
         {
-            Debug.Log("<color=#00FFFF><b>[MainMenuManager]</b> Clic en CREDITS (Debug Mode).</color>");
+            Debug.Log("<color=#00FFFF><b>[MainMenuManager]</b> Clic en CREDITS.</color>");
+
+            if (loadCreditsAsScene && !string.IsNullOrEmpty(creditsSceneName))
+            {
+                SceneManager.LoadScene(creditsSceneName);
+                return;
+            }
+
+            if (creditsManager != null)
+            {
+                creditsManager.OpenCredits();
+            }
+            else if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(true);
+            }
+        }
+
+        public void CloseCredits()
+        {
+            if (creditsManager != null)
+            {
+                creditsManager.CloseCredits();
+            }
+            else if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
+            }
         }
 
         public void CloseSettings()
